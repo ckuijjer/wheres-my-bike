@@ -1,14 +1,45 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableHighlight,
+  View,
+} from 'react-native';
+import { Camera, Permissions } from 'expo';
 
 export default class App extends React.Component {
+  state = {
+    hasCameraPermission: null,
+    photo: null,
+  };
+
+  handleSnap = async () => {
+    if (this.camera) {
+      const photo = await this.camera.takePictureAsync();
+      this.setState({ photo });
+    }
+  };
+
+  async componentWillMount() {
+    const { status } = await Permissions.askAsync(Permissions.CAMERA);
+    this.setState({ hasCameraPermission: status === 'granted' });
+  }
+
   render() {
     return (
-      <View style={styles.container}>
-        <Text>Open up App.js to start working on your app!</Text>
-        <Text>Changes you make will automatically reload.</Text>
-        <Text>Shake your phone to open the developer menu.</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.inner}>
+          <Camera ref={ref => (this.camera = ref)} style={styles.camera} />
+          <Image style={styles.image} source={this.state.photo} />
+          <View style={styles.buttons}>
+            <TouchableHighlight onPress={this.handleSnap}>
+              <View style={styles.snap} />
+            </TouchableHighlight>
+          </View>
+        </View>
+      </SafeAreaView>
     );
   }
 }
@@ -16,8 +47,34 @@ export default class App extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  inner: {
+    flex: 1,
+  },
+  image: {
+    width: 128,
+    height: 128,
+    opacity: 0.8,
+    position: 'absolute',
+    left: 16,
+    top: 16,
+  },
+  camera: {
+    backgroundColor: '#f99',
+    width: '100%',
+    flex: 1,
+  },
+  buttons: {
+    height: 80,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  snap: {
+    width: 64,
+    height: 64,
+    borderRadius: 64,
+    borderWidth: 6,
+    borderColor: '#fff',
   },
 });
