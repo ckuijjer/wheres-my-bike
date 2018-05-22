@@ -5,7 +5,6 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableHighlight,
   View,
 } from 'react-native'
 import { Camera, Permissions, FileSystem, SecureStore } from 'expo'
@@ -34,12 +33,13 @@ export default class App extends React.Component {
       const to = FileSystem.documentDirectory + fileName
 
       try {
+        console.log('copyAsync', { from, to })
         await FileSystem.copyAsync({
           from,
           to,
         })
       } catch (error) {
-        console.log('copyAsync', error)
+        console.log('copyAsync error', error)
       }
 
       await SecureStore.setItemAsync('photo_uri', from)
@@ -47,27 +47,21 @@ export default class App extends React.Component {
     }
   }
 
-  // 4. try saving the image to the documentDirectory, using the copyAsync
-  // 5. use the uri directly
-  // 6. keep the uri in the state and asyncstorage
-  // 7. fix the touchablehighlight opacity issue on the snap button
-
+  // - try saving the image to the documentDirectory, using the copyAsync
   render() {
     return (
       <View style={styles.container}>
         <Camera ref={ref => (this.camera = ref)} style={styles.camera} />
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.safeAreaInner}>
-            <Image
-              style={styles.image}
-              source={
-                this.state.photo_uri ? { uri: this.state.photo_uri } : null
-              }
-            />
+            {this.state.photo_uri ? (
+              <Image
+                style={styles.image}
+                source={{ uri: this.state.photo_uri }}
+              />
+            ) : null}
             <View style={styles.buttons}>
-              <TouchableHighlight onPress={this.handleSnap}>
-                <View style={styles.snap} />
-              </TouchableHighlight>
+              <View style={styles.snap} />
             </View>
           </View>
         </SafeAreaView>
