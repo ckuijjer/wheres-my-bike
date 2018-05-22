@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native'
 import { Camera, Permissions, FileSystem, SecureStore } from 'expo'
@@ -26,7 +27,6 @@ export default class App extends React.Component {
   handleSnap = async () => {
     if (this.camera) {
       const photo = await this.camera.takePictureAsync()
-      console.log('photo', photo)
       const from = photo.uri
 
       const fileName = from.split('/').pop()
@@ -47,7 +47,11 @@ export default class App extends React.Component {
     }
   }
 
+  // - get the gps data from the image => impossible, you need Location.getCurrentPositionAsync
+  // - click on the image preview should open the image bigger
+  // - and show the gps data
   // - try saving the image to the documentDirectory, using the copyAsync
+  // - let the image preview rotate on rotate of the screen
   render() {
     return (
       <View style={styles.container}>
@@ -61,7 +65,9 @@ export default class App extends React.Component {
               />
             ) : null}
             <View style={styles.buttons}>
-              <View style={styles.snap} />
+              <TouchableOpacity onPress={this.handleSnap}>
+                <View style={styles.snap} />
+              </TouchableOpacity>
             </View>
           </View>
         </SafeAreaView>
@@ -82,11 +88,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   image: {
-    width: 128,
-    height: 128,
+    width: 112,
+    height: 112,
     opacity: 0.85,
     position: 'absolute',
-    left: 16,
+    left: 24,
     bottom: 0,
     backgroundColor: '#333',
   },
