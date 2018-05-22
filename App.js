@@ -20,14 +20,8 @@ export default class App extends React.Component {
     const { status } = await Permissions.askAsync(Permissions.CAMERA)
     this.setState({ hasCameraPermission: status === 'granted' })
 
-    try {
-      // const photo_uri = await AsyncStorage.getItem('photo_uri')
-      const photo_uri = await SecureStore.getItemAsync('photo_uri')
-      console.log('componentDidMount', photo_uri)
-      this.setState({ photo_uri })
-    } catch (error) {
-      console.log('componentDidMount AsyncStorage', error)
-    }
+    const photo_uri = await SecureStore.getItemAsync('photo_uri')
+    this.setState({ photo_uri })
   }
 
   handleSnap = async () => {
@@ -48,12 +42,7 @@ export default class App extends React.Component {
         console.log('copyAsync', error)
       }
 
-      try {
-        // await AsyncStorage.setItem('photo_uri', from)
-        await SecureStore.setItemAsync('photo_uri', from)
-      } catch (error) {
-        console.log('handleSnap AsyncStorage', error)
-      }
+      await SecureStore.setItemAsync('photo_uri', from)
       this.setState({ photo_uri: from })
     }
   }
