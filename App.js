@@ -1,7 +1,9 @@
 import React from 'react'
 import {
+  Animated,
   AsyncStorage,
   Image,
+  PanResponder,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -14,9 +16,40 @@ export default class App extends React.Component {
   state = {
     hasCameraPermission: null,
     photo_uri: null,
+    pan: new Animated.ValueXY(),
+    scale: new Animated.Value(1),
   }
 
   async componentDidMount() {
+    this.panResponder = PanResponder.create({
+      onMoveShouldSetResponderCapture: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+
+      onPanResponderGrant: (e, gestureState) => {
+        this.state.pan.setOffset({
+          x: this.state.pan.x._value,
+          y: this.state.pan.y._value,
+        })
+        this.state.pan.setValue({ x: 0, y: 0 })
+
+        Animated.spring(this.state.scale, { toValue: 1.1, friction: 3 }).start()
+      },
+
+      onPanResponderMove: Animated.event([
+        null,
+        { dx: this.state.pan.x, dy: this.state.pan.y },
+      ]),
+
+      onPanResponderRelease: (e, { vx, vy }) => {
+        Animated.spring(this.state.pan, {
+          toValue: 0,
+        }).start()
+
+        Animated.spring(this.state.scale, { toValue: 1, friction: 3 }).start()
+        // this.state.pan.flattenOffset()
+      },
+    })
+
     const { status } = await Permissions.askAsync(Permissions.CAMERA)
     this.setState({ hasCameraPermission: status === 'granted' })
 
@@ -32,15 +65,15 @@ export default class App extends React.Component {
       const fileName = from.split('/').pop()
       const to = FileSystem.documentDirectory + fileName
 
-      try {
-        console.log('copyAsync', { from, to })
-        await FileSystem.copyAsync({
-          from,
-          to,
-        })
-      } catch (error) {
-        console.log('copyAsync error', error)
-      }
+      // try {
+      //   console.log('copyAsync', { from, to })
+      //   await FileSystem.copyAsync({
+      //     from,
+      //     to,
+      //   })
+      // } catch (error) {
+      //   console.log('copyAsync error', error)
+      // }
 
       await SecureStore.setItemAsync('photo_uri', from)
       this.setState({ photo_uri: from })
@@ -52,23 +85,43 @@ export default class App extends React.Component {
   // - and show the gps data
   // - try saving the image to the documentDirectory, using the copyAsync
   // - let the image preview rotate on rotate of the screen
+  // - geofencing and remembering often used parking locations
   render() {
+    const { x: translateX, y: translateY } = this.state.pan
+    const scale = this.state.scale
+
+    const imageContainerStyle = {
+      width: 112,
+      height: 112,
+      opacity: 0.85,
+      position: 'absolute',
+      left: 24,
+      bottom: 0,
+      backgroundColor: '#333',
+      transform: [{ translateX }, { translateY }, { scale }],
+    }
+
     return (
       <View style={styles.container}>
         <Camera ref={ref => (this.camera = ref)} style={styles.camera} />
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.safeAreaInner}>
-            {this.state.photo_uri ? (
-              <Image
-                style={styles.image}
-                source={{ uri: this.state.photo_uri }}
-              />
-            ) : null}
             <View style={styles.buttons}>
               <TouchableOpacity onPress={this.handleSnap}>
                 <View style={styles.snap} />
               </TouchableOpacity>
             </View>
+            <Animated.View
+              style={imageContainerStyle}
+              {...(this.panResponder ? this.panResponder.panHandlers : {})}
+            >
+              {this.state.photo_uri ? (
+                <Image
+                  style={styles.image}
+                  source={{ uri: this.state.photo_uri }}
+                />
+              ) : null}
+            </Animated.View>
           </View>
         </SafeAreaView>
       </View>
@@ -87,14 +140,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
-  image: {
+  imageContainer: {
     width: 112,
     height: 112,
-    opacity: 0.85,
+    opacity: 1, //0.85,
     position: 'absolute',
     left: 24,
     bottom: 0,
-    backgroundColor: '#333',
+    backgroundColor: '#f99',
+  },
+  image: {
+    flex: 1,
   },
   camera: {
     position: 'absolute',
