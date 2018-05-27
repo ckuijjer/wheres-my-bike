@@ -2,51 +2,45 @@ import React from 'react'
 import {
   Animated,
   AsyncStorage,
+  Dimensions,
   Image,
   PanResponder,
   SafeAreaView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native'
 import { Camera, Permissions, FileSystem, SecureStore } from 'expo'
+
+import CameraButton from './CameraButton'
 
 export default class App extends React.Component {
   state = {
     hasCameraPermission: null,
     photo_uri: null,
-    pan: new Animated.ValueXY(),
+    dy: new Animated.Value(0),
     scale: new Animated.Value(1),
   }
 
   async componentDidMount() {
+    console.log('🥃', Dimensions.get('window'))
+
     this.panResponder = PanResponder.create({
       onMoveShouldSetResponderCapture: () => true,
       onMoveShouldSetPanResponderCapture: () => true,
 
       onPanResponderGrant: (e, gestureState) => {
-        this.state.pan.setOffset({
-          x: this.state.pan.x._value,
-          y: this.state.pan.y._value,
-        })
-        this.state.pan.setValue({ x: 0, y: 0 })
+        this.state.dy.setOffset(this.state.dy._value)
+        this.state.dy.setValue(0)
 
         Animated.spring(this.state.scale, { toValue: 1.1, friction: 3 }).start()
       },
 
-      onPanResponderMove: Animated.event([
-        null,
-        { dx: this.state.pan.x, dy: this.state.pan.y },
-      ]),
+      onPanResponderMove: Animated.event([null, { dy: this.state.dy }]),
 
       onPanResponderRelease: (e, { vx, vy }) => {
-        Animated.spring(this.state.pan, {
-          toValue: 0,
-        }).start()
-
+        Animated.spring(this.state.dy, { toValue: 0 }).start()
         Animated.spring(this.state.scale, { toValue: 1, friction: 3 }).start()
-        // this.state.pan.flattenOffset()
       },
     })
 
@@ -87,7 +81,7 @@ export default class App extends React.Component {
   // - let the image preview rotate on rotate of the screen
   // - geofencing and remembering often used parking locations
   render() {
-    const { x: translateX, y: translateY } = this.state.pan
+    const translateY = this.state.dy
     const scale = this.state.scale
 
     const imageContainerStyle = {
@@ -98,7 +92,7 @@ export default class App extends React.Component {
       left: 24,
       bottom: 0,
       backgroundColor: '#333',
-      transform: [{ translateX }, { translateY }, { scale }],
+      transform: [{ translateY }, { scale }],
     }
 
     return (
@@ -106,10 +100,11 @@ export default class App extends React.Component {
         <Camera ref={ref => (this.camera = ref)} style={styles.camera} />
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.safeAreaInner}>
-            <View style={styles.buttons}>
-              <TouchableOpacity onPress={this.handleSnap}>
-                <View style={styles.snap} />
-              </TouchableOpacity>
+            <View
+              style={styles.buttons}
+              onLayout={event => console.log('🦋', event.nativeEvent.layout)}
+            >
+              <CameraButton onPress={this.handleSnap} />
             </View>
             <Animated.View
               style={imageContainerStyle}
@@ -163,15 +158,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-  },
-  snap: {
-    width: 64,
-    height: 64,
-    borderRadius: 64,
-    borderWidth: 6,
-    borderColor: '#fff',
-    shadowColor: '#333',
-    shadowRadius: 1,
-    shadowOpacity: 0.3,
   },
 })
