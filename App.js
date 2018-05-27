@@ -79,7 +79,6 @@ export default class App extends React.Component {
   // - let the image preview rotate on rotate of the screen
   // - geofencing and remembering often used parking locations
   render() {
-    const translateY = this.state.dy
     const scale = this.state.scale
 
     const { width, height } = Dimensions.get('window')
@@ -91,32 +90,35 @@ export default class App extends React.Component {
     // - bottom: 0 ... 64
     // - dy inputrange = window.height for now?
 
-    const inputRange = [0, height]
-    const top = Animated.interpolate({
+    const inputRange = [-height, 0]
+    const top = this.state.dy.interpolate({
       inputRange,
-      outputRange: [height - 64, 0],
+      outputRange: [0, height - 64 - 112],
+      // outputRange: [0, 64],
+      extrapolate: 'clamp',
     })
     const left = 24
-    const right = Animated.interpolate({
+    const right = this.state.dy.interpolate({
       inputRange,
-      outputRange: [width - 112 - 24, 24],
+      outputRange: [24, width - 112 - 24],
     })
-    const bottom = Animated.interpolate({
+    const bottom = this.state.dy.interpolate({
       inputRange,
-      outputRange: [0, 64],
+      outputRange: [64, 0],
+      extrapolate: 'clamp',
     })
 
-    const imageContainerStyle = {
-      width: 112,
-      height: 112,
+    const modalStyle = {
+      // width: 112,
+      // height: 112,
       opacity: 0.85,
       position: 'absolute',
       top,
       right,
       bottom,
       left,
-      backgroundColor: '#333',
-      transform: [{ translateY }, { scale }],
+      backgroundColor: '#f99',
+      // transform: [{ scale }],
     }
 
     return (
@@ -128,10 +130,10 @@ export default class App extends React.Component {
               <CameraButton onPress={this.handleSnap} />
             </View>
             <Animated.View
-              style={imageContainerStyle}
+              style={modalStyle}
               {...(this.panResponder ? this.panResponder.panHandlers : {})}
             >
-              {this.state.photo_uri ? (
+              {false && this.state.photo_uri ? (
                 <Image
                   style={styles.image}
                   source={{ uri: this.state.photo_uri }}
