@@ -23,8 +23,6 @@ export default class App extends React.Component {
   }
 
   async componentDidMount() {
-    console.log('🥃', Dimensions.get('window'))
-
     this.panResponder = PanResponder.create({
       onMoveShouldSetResponderCapture: () => true,
       onMoveShouldSetPanResponderCapture: () => true,
@@ -84,13 +82,39 @@ export default class App extends React.Component {
     const translateY = this.state.dy
     const scale = this.state.scale
 
+    const { width, height } = Dimensions.get('window')
+
+    // use dy to calculate the position of
+    // - top: window.height - 64 ... 0
+    // - left: 16
+    // - right: window.width - 112 - 16 ... 16
+    // - bottom: 0 ... 64
+    // - dy inputrange = window.height for now?
+
+    const inputRange = [0, height]
+    const top = Animated.interpolate({
+      inputRange,
+      outputRange: [height - 64, 0],
+    })
+    const left = 24
+    const right = Animated.interpolate({
+      inputRange,
+      outputRange: [width - 112 - 24, 24],
+    })
+    const bottom = Animated.interpolate({
+      inputRange,
+      outputRange: [0, 64],
+    })
+
     const imageContainerStyle = {
       width: 112,
       height: 112,
       opacity: 0.85,
       position: 'absolute',
-      left: 24,
-      bottom: 0,
+      top,
+      right,
+      bottom,
+      left,
       backgroundColor: '#333',
       transform: [{ translateY }, { scale }],
     }
@@ -100,10 +124,7 @@ export default class App extends React.Component {
         <Camera ref={ref => (this.camera = ref)} style={styles.camera} />
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.safeAreaInner}>
-            <View
-              style={styles.buttons}
-              onLayout={event => console.log('🦋', event.nativeEvent.layout)}
-            >
+            <View style={styles.buttons}>
               <CameraButton onPress={this.handleSnap} />
             </View>
             <Animated.View
