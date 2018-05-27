@@ -170,5 +170,8 @@ const styles = StyleSheet.create({
     borderRadius: 64,
     borderWidth: 6,
     borderColor: '#fff',
+    shadowColor: '#333',
+    shadowRadius: 1,
+    shadowOpacity: 0.3,
   },
 })
